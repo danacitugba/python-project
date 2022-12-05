@@ -1,1 +1,2 @@
 Bu test.txt dosyasında front-end branch üzerinde yapılan bir değişikliktir
+Bu satır ikinci değişkliği göstermektedir. Yine front-end branch üzerinde yapılmıştır
