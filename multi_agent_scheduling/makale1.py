@@ -4,30 +4,6 @@ import math
 import csv
 import time
 
-"""
-A AJANI (JUST_ITS) B AJANI (JUST_ITS)
-sooooonnnnnnnn
-
-Jobs sinifini gostermektedir. Islere ait ozelliklere baktigimizda her isin:
-*string niteliginde olan isin adi, ait oldugu ajan adi
-*float niteliginde olan is suresi, is agirligi, son teslim suresi, agirlıklandirilmiş is suresi,
-    sezgisele gore revize edilmis proses suresi, tamamlanma zamani
-*integer niteliginde olan ait oldugu ajana ait kod, cizelgelemedeki sirasi,
-    tardy durumuna dusup dusmedigi
-"""
-""" Bu bölümde A ve B ajanına ait tüm işler revize proses süreleri (PD) değerlerine göre sıralanmaktadır.
-PD değeri aslında pozisyona bağlı öğrenme bozulma etkisi altında WPT değerlerinin hesaplanmasıdır. 
-Toplam ağırlıklı tamamlanma zamanı minimizasyonunda WPT sezgiseli kullanılır. 
-Fakat burada bir de tardy durumuna düşmek istemeyen B ajanımız var. Tardy minimize edilmeye çalışıldığında ise EDD 
-sezgiseli uygulanılır. 
-Tüm işler PD değerlerine göre sıralanmıştır. B ajanı için EDD WPT ile entegre edilmiştir. 
-PD değeri çizelgedeki her bir pozisyon için tek tek hesaplanır ve en küçük değere sahip iş çizelgeye atanır. 
-Bir sonraki poziston için atanmayan işlerin PD değerleri yeniden hesaplaır ve iterasyon bu şekilde devam eder.
-
-Tek A ajanı için PD değerlerini hesaplamak aslında tüm işleri WPT kuralına göre dizmektir. 
-B ajanı içinse duedateler ve interpolasyon katsayısı olduğu için basitleştirme mümkün değildir. """
-
-
 class Jobs:  # işlere ait sınıfı göstermektedir.
     name = ""  # işin adının göstermektedir.
     agent_name = ""  # işin hangi ajana ait olduğunu göstermektedir.
@@ -67,12 +43,6 @@ class Node:  # düğümlere ait sınıfı göstermektedir.
 
 def jobs_info():
     # işlere ait bilgiler girilir
-    """
-    :return: all_jobs_info: Sonunda elde edilen çizelgede A ajanına ait işler ilk sırda; B ajanına ait işler
-                            ikinci sırada yer alır. A ajanına ait işler WPT değerlerine göre B ajanıana ait işler
-                            ise deadlinelarına göre sıralanır.
-
-    """
     print("A ajanının amacı KENDİSİNE AİT İŞLERİN toplam ağırlıklı tamamlanma zamanının minimizasyonudur.")
     print("B ajanının amacı hiç bir işin TARDY duruma düşmemesidir.")
     num_of_jobs = int(input("Tüm iş sayısını giriniz: "))  # toplam iş sayısını vemektedir.
@@ -136,14 +106,6 @@ def calculate_learning_coefficient(learning_percent):
     :param learning_percent: öğrenme yüzdesi
     :return: learning_coefficient: öğrenme katsayısı
     """
-    """learning coefficient yani öğrenme eğrisi nedir?
-    Üretilen toplan miktar 2 katına çıktıkça, bir birimin üretilmesi için gereken toplam ortalama zaman diyelim ki
-    %20 düşüyor. Diğer bir ifadeyle bir önceki birim üretim zamanının % 80 i olur. Biz buna % 80 öğrenme eğrisi diyoruz.
-    Öğrenme eğrisi matematiksel ifadesi Y = a * (X**b)
-    Y = bir birimi üretmek için gereken toplam ortalama zaman
-    a = ilk ürünü üretmek için gereken zaman
-    X = toplam üretiecek birim miktarı
-    b = the learning index or coefficient (öğrenme indeksi veya katsayısı) = log learning curve percentage ÷ log 2 """
     learning_coefficient = (math.log(learning_percent)) / (math.log(2))  # öğrenme katsayısı
     return learning_coefficient
 
@@ -180,8 +142,6 @@ def calculate_job_PD(job_list, position, complete_time, learning_rate, deteriora
     completion_time = complete_time  # çizelgedeki son işin tamamlanma zamanını göstermektedir.
     schedule = []
     for jobb in job_list:
-        # for döngüsüyle job_list'teki her iş (jobb) için (position= - + r) pozisyonuna atanması durumunda
-        # pozisyon bazlı proses süresi hesaplanır ve PD değeri de diyeceğimiz revised_prcess_time hesaplanır
         calculate_positioned_process_time(jobb, position, completion_time, learning_rate, deterioration_rate)
         jobb.completion_time = completion_time + jobb.positioned_process_time
         jobb.revised_process_time = (interpolation_rate * jobb.positioned_process_time + (1 - interpolation_rate) *
@@ -210,8 +170,6 @@ def calculate_job_PD_all_agents(job_list, position, complete_time, learning_rate
     completion_time = complete_time  # çizelgedeki son işin tamamlanma zamanını göstermektedir.
     schedule = []
     for jobb in job_list:
-        # for döngüsüyle job_list'teki her iş (jobb) için (position= - + r) pozisyonuna atanması durumunda
-        # pozisyon bazlı proses süresi hesaplanır ve PD değeri de diyeceğimiz revised_prcess_time hesaplanır
         calculate_positioned_process_time(jobb, position, completion_time, learning_rate, deterioration_rate)
         jobb.completion_time = completion_time + jobb.positioned_process_time
         jobb.revised_process_time = (jobb.positioned_process_time * jobb.agent_code + jobb.positioned_process_time *
@@ -219,8 +177,6 @@ def calculate_job_PD_all_agents(job_list, position, complete_time, learning_rate
         #  print("{} işi için PD değeri, {}. pozisyon için {} olmaktadır.".format(jobb.name,
         #  position, jobb.revised_process_time))
     job_list = sorted(job_list, key=operator.attrgetter("revised_process_time"))  # her bir pozisyon için PD
-    # değerleri hesaplanan job_list teki işler  "revised_process_time" attributelarına göre sıralanır.
-    #  print("en küçük PD değerine sahip iş {} dir".format(job_list[0].name))
     schedule.append(job_list[0])
     job_list.remove(job_list[0])
     schedule = schedule + job_list
@@ -402,13 +358,6 @@ def compose_schedule_A_best(job_list, schedule, completion_time, learning_rate, 
             compltion_time = initial_schedule[j].completion_time
 
         else:
-            print("")
-            # print(" Atanmamış işler:")
-            # for jobb in unassigned_jobs:
-                # print("     {} -> ".format(jobb.name))
-            # print(" Tardy durumuna düşmemesi gereken atanmamış işler:")
-            # for jobb in unassigned_no_tardy_jobs:
-                # print("     {} -> ".format(jobb.name))
 
             if unassigned_jobs[0] in unassigned_no_tardy_jobs:
                 # print(" {}. pozisyona atanıp atanmayacağına karar verilecek {} isimli iş, aynı zamanda B ajanı işlerinden biridir.".format((j + 1), unassigned_jobs[0]))
@@ -535,16 +484,11 @@ def compose_schedule_all_agents(schedule, a_best, b_best, a_worst, b_worst, lear
         job.revised_process_time = 0.0
         job.tardy = 0
 
-    # calculate_schedule_by_PD de anlatılan sezgisele göre sıralanmış iş listesini (schedule) alarak öğrenme
-    # (learning_rate) ve bozulma (deterioration_rate) etkileri altında; B ajanına ait işler tardy duruma
-    # düşmeyecek şekilde yeniden sıralar.
     initial_schedule = []  # fonksiyon sonucu elde edilecek iş listesini göstermektedir.
     compltion_time = 0.0  # initial solution tamamlanma zamanının gösterir.
     for j in range(0, len(schedule)):
         # print("Çizelgede {}. poziyona hangi işin atanacağına karar verilecektir.".format(j + 1))
         check_tardiness = []  # initial_solutiona (j+1). pozisyona yeni bir atanırken atanacak iş ve tardy durumuna
-        # düşmemesi gereken işler olan B ajanına ait işlerin  birleşiminden oluşur. Tardy duruma düşülüp düşülmediği
-        # bu listedeki işlerin pozisyon bazlı proses süreleri hesaplanarak belirlenir.
         unassigned_jobs = [jobb for jobb in schedule if jobb not in initial_schedule]  # başlangıç çözüm çizelgesine
         # atanmamış iş listesini vermektedir.
         unassigned_jobs = calculate_schedule_by_PD_all_agents_adjusted_weights(unassigned_jobs, j + 1, compltion_time,
@@ -557,8 +501,6 @@ def compose_schedule_all_agents(schedule, a_best, b_best, a_worst, b_worst, lear
         number_of_tardy_jobs = 0  # tardy duruma düşmüş iş sayısını göstermektedir.
 
         if len(unassigned_no_tardy_jobs) == 0:  # şayet tardy olmaması gereken iş kalmamışsa atanmamış işler WPT
-            # sistematiğine göre sıralanmış demektir. Her iki ajanın amacı, işlerin WPT değerlerine göre sıralaması
-            # ile optimize edilebilir.
             initial_schedule.append(unassigned_jobs[0])
             initial_schedule[j].positioned_process_time = \
                 calculate_positioned_process_time(initial_schedule[j], (j + 1), compltion_time, learning_rate,
@@ -567,12 +509,6 @@ def compose_schedule_all_agents(schedule, a_best, b_best, a_worst, b_worst, lear
             compltion_time = initial_schedule[j].completion_time
         else:
             print("")
-            # print(" Atanmamış işler:")
-            # for jobb in unassigned_jobs:
-                # print("     {} -> ".format(jobb.name))
-            # print(" Tardy durumuna düşmemesi gereken atanmamış işler:")
-            # for jobb in unassigned_no_tardy_jobs:
-                # print("     {} -> ".format(jobb.name))
             if unassigned_jobs[0] in unassigned_no_tardy_jobs:
                 # print(" {}. pozisyona atanıp atanmayacağına karar verilecek {} isimli iş, aynı zamanda B ajanı işlerinden biridir.".format((j + 1), unassigned_jobs[0]))
                 unassigned_no_tardy_jobs.remove(unassigned_jobs[0])  # check_tardy listesinde mükerrerlik yaşanmaması
@@ -585,10 +521,6 @@ def compose_schedule_all_agents(schedule, a_best, b_best, a_worst, b_worst, lear
             # print(" {} işi atandığında tardy durum değerlendirilmesi yapılması gereken işler: ". format(check_tardiness[0].name))
 
             for i in range(0, len(check_tardiness)):
-                # print(" {} işiyle ilgili bilgiler:".format(check_tardiness[i].name))
-                # print("     proses süresi: {}".format(check_tardiness[i].process_time))
-                # print("     deadline: {}".format(check_tardiness[i].deadline))
-                # print("     Kendinden önceki işlerin tamamlanma zamanı: {}".format(compltion_time2))
                 calculate_positioned_process_time(check_tardiness[i], (i + j + 1), compltion_time2, learning_rate,
                                                   deterioration_rate)
                 check_tardiness[i].completion_time = compltion_time2 + check_tardiness[i].positioned_process_time
@@ -635,10 +567,6 @@ def compose_schedule_all_agents(schedule, a_best, b_best, a_worst, b_worst, lear
                 number_of_tardy_jobs2 = 0
                 # print(" {} işi atandığında tardy durum değerlendirilmesi yapılması gereken işler: ".format(check_tardiness[0].name))
                 for i in range(0, len(check_tardiness)):
-                    # print("     {} işiyle ilgili bilgiler:".format(check_tardiness[i].name))
-                    # print("     proses süresi: {}".format(check_tardiness[i].process_time))
-                    # print("     deadline: {}".format(check_tardiness[i].deadline))
-                    # print("     Kendinden önceki işlerin tamamlanma zamanı: {}".format(completion_time4))
                     calculate_positioned_process_time(check_tardiness[i], (i + j + 1), completion_time4, learning_rate,
                                                       deterioration_rate)
                     check_tardiness[i].completion_time = completion_time4 + check_tardiness[i].positioned_process_time
@@ -721,16 +649,9 @@ def compose_schedule_B_best(job_list, schedule, completion_time, learning_rate, 
         number_of_tardy_jobs = 0  # tardy duruma düşmüş iş sayısını göstermektedir.
         check_tardiness.append(unassigned_jobs[0])
         check_tardiness = check_tardiness + unassigned_jobs2
-        # print(" Atanmamış işler:")
-        # for jobb in unassigned_jobs:
-            # print("     {} -> ".format(jobb.name))
         compltion_time2 = compltion_time
         # print(" {} işi atandığında tardy durum değerlendirilmesi yapılması gereken işler: ".format(check_tardiness[0].name))
         for i in range(0, len(check_tardiness)):
-            # print(" {} işiyle ilgili bilgiler:".format(check_tardiness[i].name))
-            # print("     proses süresi: {}".format(check_tardiness[i].process_time))
-            # print("     deadline: {}".format(check_tardiness[i].deadline))
-            # print("     Kendinden önceki işlerin tamamlanma zamanı: {}".format(compltion_time2))
             calculate_positioned_process_time(check_tardiness[i], (i + j + 1), compltion_time2, learning_rate,
                                               deterioration_rate)
             check_tardiness[i].completion_time = compltion_time2 + check_tardiness[i].positioned_process_time
@@ -764,15 +685,9 @@ def compose_schedule_B_best(job_list, schedule, completion_time, learning_rate, 
             number_of_tardy_jobs2 = 0
             # print(" {} işi atandığında tardy durum değerlendirilmesi yapılması gereken işler: ".format(check_tardiness[0].name))
             for i in range(0, len(check_tardiness)):
-                # print("     {} işiyle ilgili bilgiler:".format(check_tardiness[i].name))
-                # print("     proses süresi: {}".format(check_tardiness[i].process_time))
-                # print("     deadline: {}".format(check_tardiness[i].deadline))
-                # print("     Kendinden önceki işlerin tamamlanma zamanı: {}".format(completion_time4))
                 calculate_positioned_process_time(check_tardiness[i], (i + j + 1), completion_time4, learning_rate,
                                                   deterioration_rate)
                 check_tardiness[i].completion_time = completion_time4 + check_tardiness[i].positioned_process_time
-                # print("     Pozisyon bazlı proses süresi: {}".format(check_tardiness[i].positioned_process_time))
-                # print("     İş atandığı durumda yeni tamamlanma zamanı: {}".format(check_tardiness[i].completion_time))
                 if check_tardiness[i].completion_time > check_tardiness[i].deadline:
                     check_tardiness[i].tardy = 1
                     check_tardiness[i].tardy_days = check_tardiness[i].completion_time - check_tardiness[i].deadline
@@ -796,16 +711,9 @@ def compose_schedule_B_best(job_list, schedule, completion_time, learning_rate, 
                 print("")
                 # print("Çözüm infeasibledır.")
                 break
-        # if j == len(job_list) - 1:
-            # print("B ajanına ait işlerden oluşan çizelge: ")
-            # for jobb in initial_schedule:
-                # print("     {}. {} -> gerçek proses süresi: {} -> yeni proses süresi: {} -> tamamlanma: {} -> deadline: {} -> weight: {}" .format(jobb.position, jobb.name, jobb.process_time, jobb.positioned_process_time, jobb.completion_time, jobb.deadline, jobb.weight))
-        # print("")
         j = +1
 
     if len(A_agent_jobs) > 0:
-        # print("Bu çizelgeye A ajanına ait işler atanacaktır ve {} tane iş vardır".format(len(A_agent_jobs)))
-        # print("kaçıncı sıraya atanacağı ve başlama zamanı {}, {}".format(len(job_list) + 1, initial_schedule[-1].completion_time))
         A_agent_jobs = calculate_schedule_by_PD_all_agents(A_agent_jobs, len(job_list) + 1,
                                                            initial_schedule[-1].completion_time, learning_rate,
                                                            deterioration_rate)
@@ -907,10 +815,6 @@ def calculate_LB_B_best(node, node_b_amac, jobs_list, complete_time, learning_ra
                                                    learning_rate, deterioration_rate)
     position2 = len(node) + len(A_jobs) + 1
     LB = node_b_amac
-    # print("LB hesaplanmadan önce amaç fonksiyonu değeri {}".format(node_b_amac))
-    # print("Nodeda yeni atanan iş ile toplam iş sayısı {}".format(len(node)))
-    # print("Nodea atanmamış A ajanı iş sayısı {}".format(len(A_jobs)))
-    # print("LB değeri hesaplaması {}. pozisyondan başlayacaktır".format(position2))
     completion_time2 = complete_time
     for job in schedule:
         job.positioned_process_time = (job.process_time + completion_time2 * deterioration_rate) * (position2 **
@@ -949,14 +853,6 @@ def branch_and_bounding_A_best(jobs_list, UB, learning_rate, deterioration_rate)
     # print("A AJANI İÇİN DAL SINIR ALGORİTMASINA BAŞLANACAKTIR.")
     # print("Başlangıç çözüm objective değeri: {}".format(UB))
     for _ in range(0, len(jobs_list)):
-        # print("-----------------------------------------------")
-        # print("{}. seviyede branching gerçekleştirilecektir. Branching sonunda oluşacak nodelardaki iş sayısı branching seviyesi kadardır.".format(_ + 1))
-        # print("Oluşturulan node sayısı: {}".format(len(node_list) - 1))
-        # print("     node_list eleman sayısı: {}".format(len(node_list)))
-        # print("     node_A_amac eleman sayısı: {}".format(len(node_A_amac)))
-        # print("     node_B_amac eleman sayısı: {}".format(len(node_B_amac)))
-        # print("     node_tamamlanma_list eleman sayısı: {}".format(len(node_tamamlanma_list)))
-        # print("     node_list_isim eleman sayısı: {}".format(len(node_list_isim)))
         sorted_node = [node for node in node_list if len(node) == _]
         # print("Dallanılabilecek node sayısı = {}".format(len(sorted_node)))
         for j in range(0, len(sorted_node)):
@@ -984,13 +880,6 @@ def branch_and_bounding_A_best(jobs_list, UB, learning_rate, deterioration_rate)
                 B_agents_jobs_unassigned_to_node = [job for job in jobs_unassigned_to_node2 if job.agent_name == "B"]
 
                 print("mevcut nodea atanmamış işler: {}".format(dugumde_olmayan_isler))
-                # print("     Yeni nodeun oluşturulmadan önce son node sayısı: {}".format(len(node_list) - 1))
-                # print("         node_list eleman sayısı: {}".format(len(node_list)))
-                # print("         node_A_amac eleman sayısı: {}".format(len(node_A_amac)))
-                # print("         node_B_amac eleman sayısı: {}".format(len(node_B_amac)))
-                # print("         node_tamamlanma_list eleman sayısı: {}".format(len(node_tamamlanma_list)))
-                # print("         node_list_isim eleman sayısı: {}".format(len(node_list_isim)))
-
                 if jobs_unassigned_to_node2 == B_agents_jobs_unassigned_to_node:
                     print("atanacak iş ", job.name)
                     # print(" ")
@@ -1001,11 +890,6 @@ def branch_and_bounding_A_best(jobs_list, UB, learning_rate, deterioration_rate)
                     B_agents_jobs_unassigned_to_node = compose_schedule_B_best(B_agents_jobs_unassigned_to_node,
                                                                                copied_node, node_tamamlanma,
                                                                                learning_rate, deterioration_rate)
-
-                    # print("     B ajanına ait işler atanmadan nodeun A ajanı amaç fonksiyon değeri {}".format(node_a_amac))
-                    # print("     B ajanına ait işler atanmadan nodeun B ajanı amaç fonksiyon değeri {}".format(node_b_amac))
-                    # print("     B ajanına ait işler atanmadan nodeun son işinin tamamlanma zamanı {}".format(node_tamamlanma))
-
                     for jobb in B_agents_jobs_unassigned_to_node:
                         jobb.position = len(copied_node) + 1
                         jobb.positioned_process_time = (jobb.process_time + deterioration_rate * node_tamamlanma) * \
@@ -1017,10 +901,6 @@ def branch_and_bounding_A_best(jobs_list, UB, learning_rate, deterioration_rate)
 
                     copied_node_isim = dugumdeki_isler.copy()
                     copied_node_isim = copied_node_isim + dugumde_olmayan_isler
-
-                    # print("     B ajanına ait işler atandıktan sonra nodeun A ajanı amaç fonksiyon değeri {}".format(node_a_amac))
-                    # print("     B ajanına ait işler atandıktan sonra nodeun B ajanı amaç fonksiyon değeri {}".format(node_b_amac))
-                    # print("     B ajanına ait işler atandıktan sonra nodeun son işinin tamamlanma zamanı {}".format(node_tamamlanma))
                     node_list_isim.append(copied_node_isim)
                     node_list.append(copied_node)
                     node_A_amac.append(node_a_amac)
@@ -1030,29 +910,19 @@ def branch_and_bounding_A_best(jobs_list, UB, learning_rate, deterioration_rate)
                     olasi_cozumler_A_sonuc.append(node_a_amac)
                     olasi_cozumler_B_sonuc.append(node_b_amac)
                     olasi_cozumler_list_isim.append(copied_node_isim)
-                    # print("     Bu nodeun oluşturulması sonucu yeni node sayısı: {}".format(len(node_list) - 1))
-                    # print("         node_list eleman sayısı: {}".format(len(node_list)))
-                    # print("         node_A_amac eleman sayısı: {}".format(len(node_A_amac)))
-                    # print("         node_B_amac eleman sayısı: {}".format(len(node_B_amac)))
-                    # print("         node_tamamlanma_list eleman sayısı: {}".format(len(node_tamamlanma_list)))
-                    # print("         node_list_isim eleman sayısı: {}".format(len(node_list_isim)))
+
                     if node_a_amac < UB:
                         UB = node_a_amac
                     # print("--------")
                     break
                 elif jobs_unassigned_to_node2 == A_agents_jobs_unassigned_to_node:
-                    # print(" ")
-                    # print("Node a atanmamış işler sadece A ajanına ait işlerdir.")
-                    # print("Tardy kontrolü yapılmasına gerek yoktur.")
-                    # print("A ajanına ait işler PD değerlerine göre node a olduğu gibi eklenebilir.")
+
                     copied_node = node.copy()
                     print(jobs_unassigned_to_node2)
                     A_agents_jobs_unassigned_to_node = calculate_schedule_by_PD_all_agents(
                         A_agents_jobs_unassigned_to_node, (len(node) + 1), node_tamamlanma, learning_rate,
                         deterioration_rate)
-                    # print("     A ajanına ait işler atanmadan nodeun A ajanı amaç fonksiyon değeri {}".format(node_a_amac))
-                    # print("     A ajanına ait işler atanmadan nodeun B ajanı amaç fonksiyon değeri {}".format(node_b_amac))
-                    # print("     A ajanına ait işler atanmadan nodeun son işinin tamamlanma zamanı {}".format(node_tamamlanma))
+
                     print("A_agents_jobs_unassigned_to_node")
                     for jobb in A_agents_jobs_unassigned_to_node:
                         print(jobb.name)
@@ -1084,22 +954,9 @@ def branch_and_bounding_A_best(jobs_list, UB, learning_rate, deterioration_rate)
                         olasi_cozumler_A_sonuc.append(copied_node_a_amac)
                         olasi_cozumler_B_sonuc.append(copied_node_b_amac)
                         olasi_cozumler_list_isim.append(copied_node_isim)
-                        # print("     Bu nodeun oluşturulması sonucu yeni node sayısı: {}".format(len(node_list) - 1))
-                        # print("         node_list eleman sayısı: {}".format(len(node_list)))
-                        # print("         node_A_amac eleman sayısı: {}".format(len(node_A_amac)))
-                        # print("         node_B_amac eleman sayısı: {}".format(len(node_B_amac)))
-                        # print("         node_tamamlanma_list eleman sayısı: {}".format(len(node_tamamlanma_list)))
-                        # print("         node_list_isim eleman sayısı: {}".format(len(node_list_isim)))
+
                     else:
                         print("")
-                        # print("çizelgenin amaç fonksiyonu LB değerini aşmaktadır bu yüzden node oluşturulmayacaktır.")
-                        # print("     Bu node uygun olmadığından toplam node sayısı: {}".format(len(node_list) - 1))
-                        # print("         node_list eleman sayısı: {}".format(len(node_list)))
-                        # print("         node_A_amac eleman sayısı: {}".format(len(node_A_amac)))
-                        # print("         node_B_amac eleman sayısı: {}".format(len(node_B_amac)))
-                        # print("         node_tamamlanma_list eleman sayısı: {}".format(len(node_tamamlanma_list)))
-                        # print("         node_list_isim eleman sayısı: {}".format(len(node_list_isim)))
-                    # print("--------")
                     break
                 else:
                     print("{} işi atanacaktır ve bu iş {}{} ajanına aittir".format(job.name, job.agent_name, job.agent_code))
@@ -1161,49 +1018,25 @@ def branch_and_bounding_A_best(jobs_list, UB, learning_rate, deterioration_rate)
                                             (copied_node2_a_amac == copied_node_a_amac and
                                              copied_node_tamamlanma < copied_node2_tamamlanma):
                                         print(" Baskınlık kuralları gereği mevcut node, node-listten çıkarılacak ve yeni node eklenecektir.")
-                                        # print("    Mevcut node listeden çıkarılmadan önce toplam node sayısı: {}".format(len(node_list) - 1))
-                                        # print("         node_list eleman sayısı: {}".format(len(node_list)))
-                                        # print("         node_A_amac eleman sayısı: {}".format(len(node_A_amac)))
-                                        # print("         node_B_amac eleman sayısı: {}".format(len(node_B_amac)))
-                                        # print("         node_tamamlanma_list eleman sayısı: {}".format(len(node_tamamlanma_list)))
-                                        # print("         node_list_isim eleman sayısı: {}".format(len(node_list_isim)))
                                         node_list.pop(index2)
                                         node_list_isim.pop(index2)
                                         node_A_amac.pop(index2)
                                         node_B_amac.pop(index2)
                                         node_tamamlanma_list.pop(index2)
-                                        # print("    Mevcut node listeden çıkarıldıktan sonra toplam node sayısı: {}".format(len(node_list) - 1))
-                                        # print("         node_list eleman sayısı: {}".format(len(node_list)))
-                                        # print("         node_A_amac eleman sayısı: {}".format(len(node_A_amac)))
-                                        # print("         node_B_amac eleman sayısı: {}".format(len(node_B_amac)))
-                                        # print("         node_tamamlanma_list eleman sayısı: {}".format(len(node_tamamlanma_list)))
-                                        # print("         node_list_isim eleman sayısı: {}".format(len(node_list_isim)))
 
                                         node_list.append(copied_node)
                                         node_list_isim.append(copied_node_isim)
                                         node_A_amac.append(copied_node_a_amac)
                                         node_B_amac.append(copied_node_b_amac)
                                         node_tamamlanma_list.append(copied_node_tamamlanma)
-                                        # print("    Yeni node listeye eklendikten sonra toplam node sayısı: {}".format(len(node_list) - 1))
-                                        # print("         node_list eleman sayısı: {}".format(len(node_list)))
-                                        # print("         node_A_amac eleman sayısı: {}".format(len(node_A_amac)))
-                                        # print("         node_B_amac eleman sayısı: {}".format(len(node_B_amac)))
-                                        # print("         node_tamamlanma_list eleman sayısı: {}".format(len(node_tamamlanma_list)))
-                                        # print("         node_list_isim eleman sayısı: {}".format(len(node_list_isim)))
-                                        # print("--------")
+
                                     elif (copied_node2_a_amac < copied_node_a_amac and
                                           copied_node2_tamamlanma <= copied_node_tamamlanma) or \
                                             (copied_node2_a_amac == copied_node_a_amac and
                                              copied_node2_tamamlanma < copied_node_tamamlanma):
                                         print("")
                                         print("yeni düğüm baskınlık kuralları gereği listeye eklenmeyecektir.")
-                                        # print("    Yeni node node_listte eklenmediği için toplam node sayısı: {}".format(len(node_list) - 1))
-                                        # print("         node_list eleman sayısı: {}".format(len(node_list)))
-                                        # print("         node_A_amac eleman sayısı: {}".format(len(node_A_amac)))
-                                        # print("         node_B_amac eleman sayısı: {}".format(len(node_B_amac)))
-                                        # print("         node_tamamlanma_list eleman sayısı: {}".format(len(node_tamamlanma_list)))
-                                        # print("         node_list_isim eleman sayısı: {}".format(len(node_list_isim)))
-                                        # print("--------")
+                         
                                     else:
                                         print("eski node listeden çıkarılmayacak yeni node ise listeye eklenecektir.")
                                         node_list.append(copied_node)
@@ -1211,13 +1044,7 @@ def branch_and_bounding_A_best(jobs_list, UB, learning_rate, deterioration_rate)
                                         node_A_amac.append(copied_node_a_amac)
                                         node_B_amac.append(copied_node_b_amac)
                                         node_tamamlanma_list.append(copied_node_tamamlanma)
-                                        # print("    Yeni node node_listte eklendikten sonra toplam node sayısı: {}".format(len(node_list) - 1))
-                                        # print("         node_list eleman sayısı: {}".format(len(node_list)))
-                                        # print("         node_A_amac eleman sayısı: {}".format(len(node_A_amac)))
-                                        # print("         node_B_amac eleman sayısı: {}".format(len(node_B_amac)))
-                                        # print("         node_tamamlanma_list eleman sayısı: {}".format(len(node_tamamlanma_list)))
-                                        # print("         node_list_isim eleman sayısı: {}".format(len(node_list_isim)))
-                                        # print("--------")
+                                     
                                 else:
                                     print("     Baskınlığı kıyaslanacak node node_listte mevcuttur değildir")
                                     # print("     Yeni node node-liste eklenecektir.")
@@ -1226,26 +1053,14 @@ def branch_and_bounding_A_best(jobs_list, UB, learning_rate, deterioration_rate)
                                     node_A_amac.append(copied_node_a_amac)
                                     node_B_amac.append(copied_node_b_amac)
                                     node_tamamlanma_list.append(copied_node_tamamlanma)
-                                    # print("    Yeni node node_listte eklendikten sonra toplam node sayısı: {}".format(len(node_list) - 1))
-                                    # print("         node_list eleman sayısı: {}".format(len(node_list)))
-                                    # print("         node_A_amac eleman sayısı: {}".format(len(node_A_amac)))
-                                    # print("         node_B_amac eleman sayısı: {}".format(len(node_B_amac)))
-                                    # print("         node_tamamlanma_list eleman sayısı: {}".format(len(node_tamamlanma_list)))
-                                    # print("         node_list_isim eleman sayısı: {}".format(len(node_list_isim)))
-                                    # print("--------")
+                            
                             else:
                                 node_list.append(copied_node)
                                 node_list_isim.append(copied_node_isim)
                                 node_A_amac.append(copied_node_a_amac)
                                 node_B_amac.append(copied_node_b_amac)
                                 node_tamamlanma_list.append(copied_node_tamamlanma)
-                                # print("    Yeni node node_listte eklendikten sonra toplam node sayısı: {}".format(len(node_list) - 1))
-                                # print("         node_list eleman sayısı: {}".format(len(node_list)))
-                                # print("         node_A_amac eleman sayısı: {}".format(len(node_A_amac)))
-                                # print("         node_B_amac eleman sayısı: {}".format(len(node_B_amac)))
-                                # print("         node_tamamlanma_list eleman sayısı: {}".format(len(node_tamamlanma_list)))
-                                # print("         node_list_isim eleman sayısı: {}".format(len(node_list_isim)))
-                                # print("--------")
+                          
 
                         else:
                             print("")
@@ -1265,8 +1080,6 @@ def branch_and_bounding_A_best(jobs_list, UB, learning_rate, deterioration_rate)
         # print("***************************************")
         _ = +1
 
-    # print(" Dal sınır algoritması sonucu oluşturulan düğüm sayısı: {}".format(len(node_list) - 1))
-    # print(" Dal sınır algoritması sonusu tüm işlerin listelendiği düğüm sayısı: {}".format(len(olasi_cozumler_list)))
 
     zip_dugumler = zip(node_list_isim, node_A_amac)  # tüm düğümlere ait değerleri tutar.
     # print("tüm düğümler ve A ajanı amaç fonksiyoları:")
@@ -1343,13 +1156,7 @@ def branch_and_bounding_B_best(job_list, UB, learning_rate, deterioration_rate):
     # print("B AJANI İÇİN DAL SINIR ALGORİTMASINA BAŞLANACAKTIR.")
     # print("Başlangıç çözüm objective değeri: {}".format(UB))
     for _ in range(0, len(jobs_list)):
-        # print("-----------------------------------------------")
-        # print("{}. seviyede branching gerçekleştirilecektir. Branching sonunda oluşacak nodelardaki iş sayısı branching seviyesi kadardır.".format(_ + 1))
-        # print("Oluşturulan node sayısı: {}".format(len(node_list) - 1))
-        # print("     node_list eleman sayısı: {}".format(len(node_list)))
-        # print("     node_B_amac eleman sayısı: {}".format(len(node_B_amac)))
-        # print("     node_tamamlanma_list eleman sayısı: {}".format(len(node_tamamlanma_list)))
-        # print("     node_list_isim eleman sayısı: {}".format(len(node_list_isim)))
+
 
         sorted_node = [node for node in node_list if len(node) == _]
         # print("Dallanılabilecek node sayısı = {}".format(len(sorted_node)))
@@ -1372,16 +1179,7 @@ def branch_and_bounding_B_best(job_list, UB, learning_rate, deterioration_rate):
                 # süresini göstermektedir.
                 job.revised_process_time = 0.0  # işin belirlenmiş olan sezgisele göre hesaplanmış proses süresi
                 job.tardy = 0  # işin tardy durumuna düşüp düşmediğini gösterir. düşmüyorsa 0 düşüyorsa 1 dir.
-                # print("mevcut nodea atanmamış işler: {}".format(dugumde_olmayan_isler))
-                # print(jobs_unassigned_to_node2)
-                # print("{} işi atanacaktır".format(job.name))
-                # print("     Yeni nodeun oluşturulmadan önce son node sayısı: {}".format(len(node_list) - 1))
-                # print("         node_list eleman sayısı: {}".format(len(node_list)))
-                # print("         node_B_amac eleman sayısı: {}".format(len(node_B_amac)))
-                # print("         node_tamamlanma_list eleman sayısı: {}".format(len(node_tamamlanma_list)))
-                # print("         node_list_isim eleman sayısı: {}".format(len(node_list_isim)))
-                # print("     İş atanmadan önce nodeun B ajanı amaç fonksiyon değeri {}".format(node_b_amac))
-                # print("     İş atanmadan önce nodeun son işinin tamamlanma zamanı {}".format(node_tamamlanma))
+
 
                 job.positioned_process_time = calculate_positioned_process_time(job, (len(node) + 1), node_tamamlanma,
                                                                                 learning_rate, deterioration_rate)
@@ -1427,34 +1225,18 @@ def branch_and_bounding_B_best(job_list, UB, learning_rate, deterioration_rate):
                                     copied_node_tamamlanma <= copied_node2_tamamlanma) or \
                                         (copied_node2_b_amac == copied_node_b_amac and
                                          copied_node_tamamlanma < copied_node2_tamamlanma):
-                                    # print(" Baskınlık kuralları gereği mevcut node, node-listten çıkarılacak ve yeni node eklenecektir.")
-                                    # print("    Mevcut node listeden çıkarılmadan önce toplam node sayısı: {}".format(len(node_list) - 1))
-                                    # print("         node_list eleman sayısı: {}".format(len(node_list)))
-                                    # print("         node_B_amac eleman sayısı: {}".format(len(node_B_amac)))
-                                    # print("         node_tamamlanma_list eleman sayısı: {}".format(len(node_tamamlanma_list)))
-                                    # print("         node_list_isim eleman sayısı: {}".format(len(node_list_isim)))
+
 
                                     node_list.pop(index2)
                                     node_list_isim.pop(index2)
                                     node_B_amac.pop(index2)
                                     node_tamamlanma_list.pop(index2)
 
-                                    # print("    Mevcut node listeden çıkarıldıktan sonra toplam node sayısı: {}".format(len(node_list) - 1))
-                                    # print("         node_list eleman sayısı: {}".format(len(node_list)))
-                                    # print("         node_B_amac eleman sayısı: {}".format(len(node_B_amac)))
-                                    # print("         node_tamamlanma_list eleman sayısı: {}".format(len(node_tamamlanma_list)))
-                                    # print("         node_list_isim eleman sayısı: {}".format(len(node_list_isim)))
-
                                     node_list.append(copied_node)
                                     node_list_isim.append(copied_node_isim)
                                     node_B_amac.append(copied_node_b_amac)
                                     node_tamamlanma_list.append(copied_node_tamamlanma)
-                                    # print("    Yeni node listeye eklendikten sonra toplam node sayısı: {}".format(len(node_list) - 1))
-                                    # print("         node_list eleman sayısı: {}".format(len(node_list)))
-                                    # print("         node_B_amac eleman sayısı: {}".format(len(node_B_amac)))
-                                    # print("         node_tamamlanma_list eleman sayısı: {}".format(len(node_tamamlanma_list)))
-                                    # print("         node_list_isim eleman sayısı: {}".format(len(node_list_isim)))
-                                    # print("--------")
+
                                 elif copied_node2_b_amac == copied_node_b_amac and \
                                         copied_node2_tamamlanma == copied_node_tamamlanma:
                                     # print("eski node listeden çıkarılmayacak yeni node ise listeye eklenecektir.")
@@ -1462,21 +1244,10 @@ def branch_and_bounding_B_best(job_list, UB, learning_rate, deterioration_rate):
                                     node_list_isim.append(copied_node_isim)
                                     node_B_amac.append(copied_node_b_amac)
                                     node_tamamlanma_list.append(copied_node_tamamlanma)
-                                    # print("    Yeni node node_listte eklendikten sonra toplam node sayısı: {}".format(len(node_list) - 1))
-                                    # print("         node_list eleman sayısı: {}".format(len(node_list)))
-                                    # print("         node_B_amac eleman sayısı: {}".format(len(node_B_amac)))
-                                    # print("         node_tamamlanma_list eleman sayısı: {}".format(len(node_tamamlanma_list)))
-                                    # print("         node_list_isim eleman sayısı: {}".format(len(node_list_isim)))
-                                    # print("--------")
+
                                 else:
                                     print("")
-                                    # print("yeni düğüm baskınlık kuralları gereği listeye eklenmeyecektir.")
-                                    # print("    Yeni node node_listte eklenmediği için toplam node sayısı: {}".format(len(node_list) - 1))
-                                    # print("         node_list eleman sayısı: {}".format(len(node_list)))
-                                    # print("         node_B_amac eleman sayısı: {}".format(len(node_B_amac)))
-                                    # print("         node_tamamlanma_list eleman sayısı: {}".format(len(node_tamamlanma_list)))
-                                    # print("         node_list_isim eleman sayısı: {}".format(len(node_list_isim)))
-                                    # print("--------")
+
                             else:
                                 # print("     Baskınlığı kıyaslanacak node node_listte mevcuttur değildir")
                                 # print("     Yeni node node-liste eklenecektir.")
@@ -1484,23 +1255,13 @@ def branch_and_bounding_B_best(job_list, UB, learning_rate, deterioration_rate):
                                 node_list_isim.append(copied_node_isim)
                                 node_B_amac.append(copied_node_b_amac)
                                 node_tamamlanma_list.append(copied_node_tamamlanma)
-                                # print("    Yeni node node_listte eklendikten sonra toplam node sayısı: {}".format(len(node_list) - 1))
-                                # print("         node_list eleman sayısı: {}".format(len(node_list)))
-                                # print("         node_B_amac eleman sayısı: {}".format(len(node_B_amac)))
-                                # print("         node_tamamlanma_list eleman sayısı: {}".format(len(node_tamamlanma_list)))
-                                # print("         node_list_isim eleman sayısı: {}".format(len(node_list_isim)))
-                                # print("--------")
+
                         else:
                             node_list.append(copied_node)
                             node_list_isim.append(copied_node_isim)
                             node_B_amac.append(copied_node_b_amac)
                             node_tamamlanma_list.append(copied_node_tamamlanma)
-                            # print("    Yeni node node_listte eklendikten sonra toplam node sayısı: {}".format(len(node_list) - 1))
-                            # print("         node_list eleman sayısı: {}".format(len(node_list)))
-                            # print("         node_B_amac eleman sayısı: {}".format(len(node_B_amac)))
-                            # print("         node_tamamlanma_list eleman sayısı: {}".format(len(node_tamamlanma_list)))
-                            # print("         node_list_isim eleman sayısı: {}".format(len(node_list_isim)))
-                            # print("--------")
+
                     else:
                         print("")
                         # print("B ajanına ait işler geç kaldığından bu node üzerinden ilerlenmeyecektir.")
@@ -1519,13 +1280,6 @@ def branch_and_bounding_B_best(job_list, UB, learning_rate, deterioration_rate):
         # print("***************************************")
         _ = +1
 
-    # print(" Dal sınır algoritması sonucu oluşturulan düğüm sayısı: {}".format(len(node_list) - 1))
-    # print(" Dal sınır algoritması sonusu tüm işlerin listelendiği düğüm sayısı: {}".format(len(olasi_cozumler_list)))
-
-    # zip_dugumler = zip(node_list_isim, node_B_amac)  # tüm düğümlere ait değerleri tutar.
-    # print("tüm düğümler ve B ajanı amaç fonksiyoları:")
-    # for tup in zip_dugumler:
-        # print(tup)
 
     zipped = zip(olasi_cozumler_list_isim, olasi_cozumler_B_sonuc, olasi_cozumler_tamamlanma, olasi_cozumler_list)
     zipped = list(zipped)  # Converting to list
@@ -1536,18 +1290,14 @@ def branch_and_bounding_B_best(job_list, UB, learning_rate, deterioration_rate):
     for tuples in res:
         if tuples[1] == B_min_amac:
             optimal_cozum_listesi.append(tuples)
-    # print("LB ye göre seçilmiş liste : ")
-    # print(optimal_cozum_listesi)
+
     optimal_cozum_listesi = sorted(optimal_cozum_listesi, key=operator.itemgetter(2))
     optimal_cozum_listesi2 = []
     min_tamamlanma = optimal_cozum_listesi[0][2]
     for tuples in optimal_cozum_listesi:
         if tuples[2] == min_tamamlanma:
             optimal_cozum_listesi2.append(tuples)
-    # print("Tamamlanma zamanına göre seçilmiş liste : ")
-    # print(optimal_cozum_listesi2)
 
-    # print(A_agents_jobs_list)
     position = len(jobs_list)+1
     tamamlanma_zamani = min_tamamlanma
     A_amac = 0  # B ajanı amacının en iyi değeri aldığı durumda A ajanı amacının alacağı değer
@@ -1563,8 +1313,7 @@ def branch_and_bounding_B_best(job_list, UB, learning_rate, deterioration_rate):
             tuples[3].append(job)
             tuples[0].append(job.name)
 
-    # print("OPTİMAL COZUMLER")
-    # print(optimal_cozum_listesi)
+
     node_ratio = ((len(node_list) - 1) / total_node(len(job_list))) * 100
     # print("Bu büyüklükteki bir problem için oluşturulması gereken node sayısının % {}sı kadar node oluşturulmuştur.".format(node_ratio))
     solution_dictionary["toplam_node_sayısı"] = len(node_list) - 1
@@ -1605,14 +1354,7 @@ def branch_and_bounding_all_agents(jobs_list, UB, a_best, b_best, a_worst, b_wor
     # print("AJAN AMAÇLARI LİNEER KOMBİNASYONLARI DAL SINIR ALGORİTMASINA BAŞLANACAKTIR.")
     # print("Başlangıç çözüm objective değeri: {}".format(UB))
     for t in range(0, len(jobs_list)):
-        # print("-----------------------------------------------")
-        # print("{}. seviyede branching gerçekleştirilecektir. Branching onunda oluşacak nodelardaki iş sayısı branching seviyesi kadardır.".format(_))
-        # print("Oluşturulan node sayısı: {}".format(len(node_list) - 1))
-        # print("     node_list eleman sayısı: {}".format(len(node_list)))
-        # print("     node_A_amac eleman sayısı: {}".format(len(node_A_amac)))
-        # print("     node_B_amac eleman sayısı: {}".format(len(node_B_amac)))
-        # print("     node_tamamlanma_list eleman sayısı: {}".format(len(node_tamamlanma_list)))
-        # print("     node_list_isim eleman sayısı: {}".format(len(node_list_isim)))
+
         sorted_node = [node for node in node_list if len(node) == t]
         # print("Dallanılabilecek node sayısı = {}".format(len(sorted_node)))
         for _ in range(0, len(sorted_node)):
@@ -1638,29 +1380,14 @@ def branch_and_bounding_all_agents(jobs_list, UB, a_best, b_best, a_worst, b_wor
                 job.tardy = 0  # işin tardy durumuna düşüp düşmediğini gösterir. düşmüyorsa 0 düşüyorsa 1 dir.
                 A_agents_jobs_unassigned_to_node = [job for job in jobs_unassigned_to_node2 if job.agent_name == "A"]
                 B_agents_jobs_unassigned_to_node = [job for job in jobs_unassigned_to_node2 if job.agent_name == "B"]
-                # print("mevcut nodea atanmamış işler: {}".format(dugumde_olmayan_isler))
-                # print("     Yeni nodeun oluşturulmadan önce son node sayısı: {}".format(len(node_list) - 1))
-                # print("         node_list eleman sayısı: {}".format(len(node_list)))
-                # print("         node_A_amac eleman sayısı: {}".format(len(node_A_amac)))
-                # print("         node_B_amac eleman sayısı: {}".format(len(node_B_amac)))
-                # print("         node_ALL_amac eleman sayısı: {}".format(len(node_ALL_amac)))
-                # print("         node_tamamlanma_list eleman sayısı: {}".format(len(node_tamamlanma_list)))
-                # print("         node_list_isim eleman sayısı: {}".format(len(node_list_isim)))
 
                 if jobs_unassigned_to_node2 == B_agents_jobs_unassigned_to_node:
-                    # print(" ")
-                    # print("     Node a atanmamış işler sadece B ajanına ait işlerdir.")
-                    # print("     A ajanı amaç fonksiyonunda bir değişme olmayacaktır")
-                    # print("     B ajanı işleri kendi içlerinde hiç bir iş geç kalmayacak şekilde nodea eklenecektir.")
 
                     copied_node = node.copy()
                     B_agents_jobs_unassigned_to_node = compose_schedule_B_best(B_agents_jobs_unassigned_to_node,
                                                                                copied_node, node_tamamlanma,
                                                                                learning_rate, deterioration_rate)
 
-                    # print("     B ajanına ait işler atanmadan nodeun A ajanı amaç fonksiyon değeri {}".format(node_a_amac))
-                    # print("     B ajanına ait işler atanmadan nodeun B ajanı amaç fonksiyon değeri {}".format(node_b_amac))
-                    # print("     B ajanına ait işler atanmadan nodeun son işinin tamamlanma zamanı {}".format(node_tamamlanma))
 
                     for jobb in B_agents_jobs_unassigned_to_node:
                         jobb.position = len(copied_node) + 1
@@ -1695,13 +1422,7 @@ def branch_and_bounding_all_agents(jobs_list, UB, a_best, b_best, a_worst, b_wor
                         olasi_cozumler_B_sonuc.append(copied_node_b_amac)
                         olasi_cozumler_list_isim.append(copied_node_isim)
                         olasi_cozumler_ALL_sonuc.append(node_amac)
-                        # print("     Bu nodeun oluşturulması sonucu yeni node sayısı: {}".format(len(node_list) - 1))
-                        # print("         node_list eleman sayısı: {}".format(len(node_list)))
-                        # print("         node_A_amac eleman sayısı: {}".format(len(node_A_amac)))
-                        # print("         node_B_amac eleman sayısı: {}".format(len(node_B_amac)))
-                        # print("         node_ALL_amac eleman sayısı: {}".format(len(node_ALL_amac)))
-                        # print("         node_tamamlanma_list eleman sayısı: {}".format(len(node_tamamlanma_list)))
-                        # print("         node_list_isim eleman sayısı: {}".format(len(node_list_isim)))
+
 
                     if node_amac < UB:
                         UB = node_amac
@@ -1716,9 +1437,7 @@ def branch_and_bounding_all_agents(jobs_list, UB, a_best, b_best, a_worst, b_wor
                     A_agents_jobs_unassigned_to_node = \
                         calculate_schedule_by_PD_all_agents(A_agents_jobs_unassigned_to_node, (len(node) + 1),
                                                             node_tamamlanma, learning_rate, deterioration_rate)
-                    # print("     A ajanına ait işler atanmadan nodeun A ajanı amaç fonksiyon değeri {}".format(node_a_amac))
-                    # print("     A ajanına ait işler atanmadan nodeun B ajanı amaç fonksiyon değeri {}".format(node_b_amac))
-                    # print("     A ajanına ait işler atanmadan nodeun son işinin tamamlanma zamanı {}".format(node_tamamlanma))
+
 
                     for jobb in A_agents_jobs_unassigned_to_node:
                         jobb.position = len(copied_node) + 1
@@ -1751,34 +1470,16 @@ def branch_and_bounding_all_agents(jobs_list, UB, a_best, b_best, a_worst, b_wor
                         olasi_cozumler_B_sonuc.append(copied_node_b_amac)
                         olasi_cozumler_list_isim.append(copied_node_isim)
                         olasi_cozumler_ALL_sonuc.append(node_amac)
-                        # print("     Bu nodeun oluşturulması sonucu yeni node sayısı: {}".format(len(node_list) - 1))
-                        # print("         node_list eleman sayısı: {}".format(len(node_list)))
-                        # print("         node_A_amac eleman sayısı: {}".format(len(node_A_amac)))
-                        # print("         node_B_amac eleman sayısı: {}".format(len(node_B_amac)))
-                        # print("         node_ALL_amac eleman sayısı: {}".format(len(node_ALL_amac)))
-                        # print("         node_tamamlanma_list eleman sayısı: {}".format(len(node_tamamlanma_list)))
-                        # print("         node_list_isim eleman sayısı: {}".format(len(node_list_isim)))
+
                         if node_amac < UB:
                             UB = node_amac
                         # print("--------")
                     else:
                         print("")
-                        # print("çizelgenin amaç fonksiyonu LB değerini aşmaktadır bu yüzden node oluşturulmayacaktır.")
-                        # print("     Bu node uygun olmadığından toplam node sayısı: {}".format(len(node_list) - 1))
-                        # print("         node_list eleman sayısı: {}".format(len(node_list)))
-                        # print("         node_A_amac eleman sayısı: {}".format(len(node_A_amac)))
-                        # print("         node_B_amac eleman sayısı: {}".format(len(node_B_amac)))
-                        # print("         node_ALL_amac eleman sayısı: {}".format(len(node_ALL_amac)))
-                        # print("         node_tamamlanma_list eleman sayısı: {}".format(len(node_tamamlanma_list)))
-                        # print("         node_list_isim eleman sayısı: {}".format(len(node_list_isim)))
 
-                    # print("--------")
                     break
                 else:
-                    # print("{} işi atanacaktır ve bu iş {}{} ajanına aittir".format(job.name, job.agent_name, job.agent_code))
-                    # print("     İş atanmadan önce  nodeun A ajanı amaç fonksiyon değeri {}".format(node_a_amac))
-                    # print("     İş atanmadan önce nodeun B ajanı amaç fonksiyon değeri {}".format(node_b_amac))
-                    # print("     İş atanmadan önce nodeun son işinin tamamlanma zamanı {}".format(node_tamamlanma))
+
                     job.positioned_process_time = calculate_positioned_process_time(job, (len(node) + 1),
                                                                                     node_tamamlanma, learning_rate,
                                                                                     deterioration_rate)
@@ -1797,12 +1498,7 @@ def branch_and_bounding_all_agents(jobs_list, UB, a_best, b_best, a_worst, b_wor
                                                     copied_node_tamamlanma, learning_rate, deterioration_rate)
                     node_LB = calculate_LB_all_agents(node_LB_A, node_LB_B, a_best, b_best, a_worst,
                                                       b_worst)
-                    # print("yeni node: {}".format(copied_node_isim))
-                    # print("     İş atandıktan sonra nodeun A ajanı amaç fonksiyon değeri {}".format(copied_node_a_amac))
-                    # print("     İş atandıktan sonra nodeun B ajanı amaç fonksiyon değeri {}".format(copied_node_b_amac))
-                    # print("     İş atandıktan sonra nodeun all-agents amaç fonksiyon değeri {}".format(node_amac))
-                    # print("     İş atandıktan sonra nodeun tamamlanma zamanı {}".format(copied_node_tamamlanma))
-                    # print("     İş atandıktan sonra nodeun tahmini LB değeri {}".format(node_LB))
+
                     if node_LB_A <= a_worst and node_LB_B <= b_worst and node_LB <= UB:
                         # print("LB değerinden sonra şimdi de tardy durumuna neden oluyor mu ona bakalım")
                         if job.agent_name == "B" and len(B_agents_jobs_unassigned_to_node) == 1:
@@ -1839,55 +1535,27 @@ def branch_and_bounding_all_agents(jobs_list, UB, a_best, b_best, a_worst, b_wor
                                         copied_node_tamamlanma <= copied_node2_tamamlanma) or \
                                             (copied_node2_all_amac == node_amac and
                                              copied_node_tamamlanma < copied_node2_tamamlanma):
-                                        # print(" Baskınlık kuralları gereği mevcut node, node-listten çıkarılacak ve yeni node eklenecektir.")
-                                        # print("    Mevcut node listeden çıkarılmadan önce toplam node sayısı: {}".format(len(node_list) - 1))
-                                        # print("         node_list eleman sayısı: {}".format(len(node_list)))
-                                        # print("         node_A_amac eleman sayısı: {}".format(len(node_A_amac)))
-                                        # print("         node_B_amac eleman sayısı: {}".format(len(node_B_amac)))
-                                        # print("         node_ALL_amac eleman sayısı: {}".format(len(node_ALL_amac)))
-                                        # print("         node_tamamlanma_list eleman sayısı: {}".format(len(node_tamamlanma_list)))
-                                        # print("         node_list_isim eleman sayısı: {}".format(len(node_list_isim)))
+
                                         node_list.pop(index2)
                                         node_list_isim.pop(index2)
                                         node_A_amac.pop(index2)
                                         node_B_amac.pop(index2)
                                         node_tamamlanma_list.pop(index2)
                                         node_ALL_amac.pop(index2)
-                                        # print("    Mevcut node listeden çıkarıldıktan sonra toplam node sayısı: {}" .format(len(node_list) - 1))
-                                        # print("         node_list eleman sayısı: {}".format(len(node_list)))
-                                        # print("         node_A_amac eleman sayısı: {}".format(len(node_A_amac)))
-                                        # print("         node_B_amac eleman sayısı: {}".format(len(node_B_amac)))
-                                        # print("         node_ALL_amac eleman sayısı: {}".format(len(node_ALL_amac)))
-                                        # print("         node_tamamlanma_list eleman sayısı: {}" .format(len(node_tamamlanma_list)))
-                                        # print("         node_list_isim eleman sayısı: {}".format(len(node_list_isim)))
+
                                         node_list.append(copied_node)
                                         node_list_isim.append(copied_node_isim)
                                         node_A_amac.append(copied_node_a_amac)
                                         node_B_amac.append(copied_node_b_amac)
                                         node_ALL_amac.append(node_amac)
                                         node_tamamlanma_list.append(copied_node_tamamlanma)
-                                        # print("    Yeni node listeye eklendikten sonra toplam node sayısı: {}".format(len(node_list) - 1))
-                                        # print("         node_list eleman sayısı: {}".format(len(node_list)))
-                                        # print("         node_A_amac eleman sayısı: {}".format(len(node_A_amac)))
-                                        # print("         node_B_amac eleman sayısı: {}".format(len(node_B_amac)))
-                                        # print("         node_ALL_amac eleman sayısı: {}".format(len(node_ALL_amac)))
-                                        # print("         node_tamamlanma_list eleman sayısı: {}".format(len(node_tamamlanma_list)))
-                                        # print("         node_list_isim eleman sayısı: {}".format(len(node_list_isim)))
-                                        # print("--------")
+  
                                     elif (copied_node2_all_amac < node_amac and
                                           copied_node2_tamamlanma <= copied_node_tamamlanma) or \
                                             (copied_node2_all_amac == node_amac and
                                              copied_node2_tamamlanma < copied_node_tamamlanma):
                                         print("")
-                                        # print("yeni düğüm baskınlık kuralları gereği listeye eklenmeyecektir.")
-                                        # print("    Yeni node node_listte eklenmediği için toplam node sayısı: {}".format(len(node_list) - 1))
-                                        # print("         node_list eleman sayısı: {}".format(len(node_list)))
-                                        # print("         node_A_amac eleman sayısı: {}".format(len(node_A_amac)))
-                                        # print("         node_B_amac eleman sayısı: {}".format(len(node_B_amac)))
-                                        # print("         node_ALL_amac eleman sayısı: {}".format(len(node_ALL_amac)))
-                                        # print("         node_tamamlanma_list eleman sayısı: {}".format(len(node_tamamlanma_list)))
-                                        # print("         node_list_isim eleman sayısı: {}".format(len(node_list_isim)))
-                                        # print("--------")
+                                  
                                     else:
                                         # print("eski node listeden çıkarılmayacak yeni node ise listeye eklenecektir.")
                                         node_list.append(copied_node)
@@ -1896,14 +1564,7 @@ def branch_and_bounding_all_agents(jobs_list, UB, a_best, b_best, a_worst, b_wor
                                         node_B_amac.append(copied_node_b_amac)
                                         node_ALL_amac.append(node_amac)
                                         node_tamamlanma_list.append(copied_node_tamamlanma)
-                                        # print("    Yeni node listeye eklendikten sonra toplam node sayısı: {}".format(len(node_list) - 1))
-                                        # print("         node_list eleman sayısı: {}".format(len(node_list)))
-                                        # print("         node_A_amac eleman sayısı: {}".format(len(node_A_amac)))
-                                        # print("         node_B_amac eleman sayısı: {}".format(len(node_B_amac)))
-                                        # print("         node_ALL_amac eleman sayısı: {}".format(len(node_ALL_amac)))
-                                        # print("         node_tamamlanma_list eleman sayısı: {}".format(len(node_tamamlanma_list)))
-                                        # print("         node_list_isim eleman sayısı: {}".format(len(node_list_isim)))
-                                        # print("--------")
+  
                                 else:
                                     # print("     Baskınlığı kıyaslanacak node node_listte mevcuttur değildir")
                                     # print("     Yeni node node-liste eklenecektir.")
@@ -1913,14 +1574,7 @@ def branch_and_bounding_all_agents(jobs_list, UB, a_best, b_best, a_worst, b_wor
                                     node_B_amac.append(copied_node_b_amac)
                                     node_ALL_amac.append(node_amac)
                                     node_tamamlanma_list.append(copied_node_tamamlanma)
-                                    # print("    Yeni node node_listte eklendikten sonra toplam node sayısı: {}".format(len(node_list) - 1))
-                                    # print("         node_list eleman sayısı: {}".format(len(node_list)))
-                                    # print("         node_A_amac eleman sayısı: {}".format(len(node_A_amac)))
-                                    # print("         node_B_amac eleman sayısı: {}".format(len(node_B_amac)))
-                                    # print("         node_ALL_amac eleman sayısı: {}".format(len(node_ALL_amac)))
-                                    # print("         node_tamamlanma_list eleman sayısı: {}".format(len(node_tamamlanma_list)))
-                                    # print("         node_list_isim eleman sayısı: {}".format(len(node_list_isim)))
-                                    # print("--------")
+
                             else:
                                 node_list.append(copied_node)
                                 node_list_isim.append(copied_node_isim)
@@ -1928,14 +1582,7 @@ def branch_and_bounding_all_agents(jobs_list, UB, a_best, b_best, a_worst, b_wor
                                 node_B_amac.append(copied_node_b_amac)
                                 node_ALL_amac.append(node_amac)
                                 node_tamamlanma_list.append(copied_node_tamamlanma)
-                                # print("    Yeni node node_listte eklendikten sonra toplam node sayısı: {}".format(len(node_list) - 1))
-                                # print("         node_list eleman sayısı: {}".format(len(node_list)))
-                                # print("         node_A_amac eleman sayısı: {}".format(len(node_A_amac)))
-                                # print("         node_B_amac eleman sayısı: {}".format(len(node_B_amac)))
-                                # print("         node_ALL_amac eleman sayısı: {}".format(len(node_ALL_amac)))
-                                # print("         node_tamamlanma_list eleman sayısı: {}".format(len(node_tamamlanma_list)))
-                                # print("         node_list_isim eleman sayısı: {}".format(len(node_list_isim)))
-                                # print("--------")
+
                         else:
                             print("")
                             # print("B ajanına ait işler geç kaldığından bu node üzerinden ilerlenmeyecektir.")
@@ -1955,13 +1602,6 @@ def branch_and_bounding_all_agents(jobs_list, UB, a_best, b_best, a_worst, b_wor
         # print("***************************************")
         t = +1
 
-    # print(" Dal sınır algoritması sonucu oluşturulan düğüm sayısı: {}".format(len(node_list) - 1))
-    # print(" Dal sınır algoritması sonusu tüm işlerin listelendiği düğüm sayısı: {}".format(len(olasi_cozumler_list)))
-
-    # zip_dugumler = zip(node_list_isim, node_ALL_amac)  # tüm düğümlere ait değerleri tutar.
-    # print("tüm düğümler ve amaç fonksiyoları:")
-    # for tup in zip_dugumler:
-        # print(tup)
 
     zipped = zip(olasi_cozumler_list_isim, olasi_cozumler_ALL_sonuc, olasi_cozumler_A_sonuc, olasi_cozumler_B_sonuc,
                  olasi_cozumler_list)
